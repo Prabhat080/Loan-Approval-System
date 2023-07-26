@@ -1,0 +1,68 @@
+﻿@page "/completedrequests"
+@attribute [Authorize(Roles = "admin, customer")]
+@using Bank.Authentication;
+@inject LoanRequests loanRequests
+@inject CurrentUser currentUser
+
+<h3>CompletedRequests</h3>
+<table class="table">
+	<thead>
+		<tr>
+			<th scope="col">Request No.</th>
+			<th scope="col">Email</th>
+			<th scope="col">Loan Amt.</th>
+			<th>Processed Date</th>
+			<th scope="col">Status</th>
+		</tr>
+	</thead>
+	<tbody>
+		@for (int i = 1; i <= loanRequests.completed.Count; i++)
+		{
+			var loan = loanRequests.completed[i-1];
+			@if (currentUser.Email == "shuklaprabhat277@gmail.com")
+			{
+				<tr>
+					<th scope="row">@i</th>
+					<td>@loan.email</td>
+					<td>@loan.loan</td>
+					<td>@loan.processed_date</td>
+					<td>
+						@if(loan.status == 1)
+						{
+						<button class="btn btn-primary btn-sm">Approved</button>
+						}
+						else
+						{
+						<button class="btn btn-danger btn-sm">Rejected</button>
+						}
+					</td>
+				</tr>
+			}
+			else
+			{
+				if(currentUser.Email == loan.email)
+				{
+					<tr>
+						<th scope="row">@i</th>
+						<td>@loan.email</td>
+						<td>@loan.loan</td>
+						<td>@loan.processed_date</td>
+						<td>
+							@if(loan.status == 1)
+							{
+							<button class="btn btn-primary btn-sm">Approved</button>
+							}
+							else
+							{
+							<button type="submit" class="btn btn-danger btn-sm">Rejected</button>
+							}
+						</td>
+					</tr>
+				}
+			}
+		}
+	</tbody>
+</table>
+@code {
+
+}

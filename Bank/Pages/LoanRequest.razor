@@ -1,0 +1,90 @@
+﻿@page "/loanrequest"
+@attribute [Authorize(Roles ="customer")]
+
+@using Bank.Authentication;
+@using System.ComponentModel.DataAnnotations;
+@inject UserAccountService userAccountService
+@inject IJSRuntime js
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager navManager
+@inject CurrentUser currentUser
+
+<h3>Hello @currentUser.Name!</h3>
+<div class="row">
+    <div class="col-lg-4 offset-lg-4 pt-4 pb-4 border">
+        <div class="mb-3 text-center">
+            <h3>Request for Loan</h3>
+        </div>
+		<div class="mb-3">
+			<label>Enter the Loan Amount:</label>
+			<input type="number" @bind="model.loanAmount" class="form-control" />
+		</div>
+		<div class="mb-3 d-grid gap-2">
+			<button type="submit" @onclick="SendRequest" class="btn btn-primary">Send Request</button>
+		</div>
+	</div>
+</div>
+<br />
+<table class="table">
+	@LoanRecorder()
+	@if(Model.loans.Count == 0)
+	{
+		<h3>You have no pending loan requests</h3>
+	}
+	else
+	{
+	<thead>
+		<tr>
+			<th scope="col">Name</th>
+			<th scope="col">Email</th>
+			<th scope="col">Loan</th>
+			<th scope="col">Request Date/Time</th>
+		</tr>
+	</thead>
+	<tbody>
+		@for(int i = 0; i< Model.loans.Count; i++)
+		{
+				var loan = Model.loans[i];
+				var date_time = Model.request_dates[i];
+				<tr>
+				<th scope="row">@currentUser.Name</th>
+				<td>@currentUser.Email</td>
+				<td>@loan</td>
+				<td>@date_time</td>
+			</tr>
+		}
+	</tbody>
+	}
+</table>
+@code {
+	public class Model
+	{
+		public float loanAmount{ get; set; }
+		public static List<double> loans { get; set; }
+		public static List<DateTime> request_dates{ get; set; }
+	}
+	public Model model = new Model();
+	public string LoanRecorder()
+	{
+		Model.loans = userAccountService.GetLoansRecord(currentUser.Email);
+		Model.request_dates = userAccountService.GetDateRecord(currentUser.Email);
+		return "";
+	}
+	private async Task SendRequest()
+	{
+		if(model.loanAmount<1000 || model.loanAmount > 100000000)
+		{
+			await js.InvokeVoidAsync("alert", "You can make loan request only between 1000 to 100000000");
+			return;
+		}
+		int count = userAccountService.GetTotalRequests(currentUser.Email);
+		if(count==3)
+		{
+			await js.InvokeVoidAsync("alert", "You can send upto 3 requests only " + currentUser.Email);
+			return;
+		}
+		userAccountService.ProcessLoanRequest(currentUser.Email, model.loanAmount);
+
+		Model.loans = userAccountService.GetLoansRecord(currentUser.Email);
+	}
+}
